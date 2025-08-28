@@ -7,7 +7,6 @@ Handles knowledge base query endpoints
 from fastapi import APIRouter, HTTPException, Depends, Request
 from models import QueryRequest, QueryResponse
 from core.rag_pipeline import RAGPipeline
-from slowapi import Limiter
 from slowapi.util import get_remote_address
 from config import settings
 import time
@@ -18,9 +17,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/query", tags=["query"])
-
-# Create rate limiter for query routes
-limiter = Limiter(key_func=get_remote_address)
 
 # Global RAG pipeline instance
 rag_pipeline = None
@@ -35,7 +31,6 @@ def get_rag_pipeline():
 
 
 @router.post("/", response_model=QueryResponse)
-@limiter.limit(settings.RATE_LIMIT_QUERY)
 async def query_knowledge_base(
     request: Request,
     query_request: QueryRequest,

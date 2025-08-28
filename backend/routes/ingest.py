@@ -5,7 +5,6 @@ Handles file upload and processing endpoints
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import List
 import logging
@@ -19,9 +18,6 @@ from storage import storage
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
-
-# Create rate limiter for ingest routes
-limiter = Limiter(key_func=get_remote_address)
 
 def _validate_file(file: UploadFile) -> None:
     """
@@ -118,7 +114,6 @@ def _initialize_search_engine() -> None:
         raise
 
 @router.post("/", response_model=UploadResponse)
-@limiter.limit(settings.RATE_LIMIT_UPLOAD)
 async def ingest_files(
     request: Request, 
     files: List[UploadFile] = File(...), 

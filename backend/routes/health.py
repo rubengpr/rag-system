@@ -5,7 +5,6 @@ Handles health check and system status endpoints
 """
 
 from fastapi import APIRouter, Request
-from slowapi import Limiter
 from slowapi.util import get_remote_address
 import time
 import logging
@@ -18,11 +17,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
 
-# Create rate limiter for health routes
-limiter = Limiter(key_func=get_remote_address)
-
 @router.get("/health")
-@limiter.limit(settings.RATE_LIMIT_HEALTH)
 async def health_check(request: Request):
     """
     Basic health check endpoint
@@ -36,7 +31,6 @@ async def health_check(request: Request):
     }
 
 @router.get("/status")
-@limiter.limit(settings.RATE_LIMIT_HEALTH)
 async def system_status(request: Request):
     """
     Detailed system status endpoint
