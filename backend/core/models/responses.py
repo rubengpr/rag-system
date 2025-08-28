@@ -25,6 +25,7 @@ class QueryResponse(BaseModel):
     intent: Optional[str] = None
     search_score: Optional[float] = None
     metadata: Optional[dict] = None
+    reference_mapping: Optional[dict] = None
 
 class DocumentInfo(BaseModel):
     """Information about an uploaded document"""

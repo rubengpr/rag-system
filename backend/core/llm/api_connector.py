@@ -55,6 +55,13 @@ class APIConnector:
         
         for attempt in range(self.max_retries):
             try:
+                # Log request size for debugging
+                payload_str = json.dumps(payload)
+                print(f"REQUEST DEBUG:")
+                print(f"  Payload size: {len(payload_str)} characters")
+                print(f"  Messages count: {len(payload.get('messages', []))}")
+                print(f"  Max tokens: {payload.get('max_tokens', 'Unknown')}")
+                
                 response = requests.post(
                     f"{self.base_url}/chat/completions",
                     headers=headers,
@@ -69,6 +76,14 @@ class APIConnector:
                     raise Exception(f"API request failed with status 401: {response.text}")
                 elif response.status_code == 429:
                     # Rate limit exceeded
+                    print(f"RATE LIMIT DEBUG:")
+                    print(f"  Status: {response.status_code}")
+                    print(f"  Headers: {dict(response.headers)}")
+                    print(f"  Limit: {response.headers.get('X-RateLimit-Limit', 'Unknown')}")
+                    print(f"  Remaining: {response.headers.get('X-RateLimit-Remaining', 'Unknown')}")
+                    print(f"  Reset: {response.headers.get('X-RateLimit-Reset', 'Unknown')}")
+                    print(f"  Retry-After: {response.headers.get('Retry-After', 'Unknown')}")
+                    
                     if attempt < self.max_retries - 1:
                         wait_time = self._calculate_rate_limit_wait(response)
                         time.sleep(wait_time)

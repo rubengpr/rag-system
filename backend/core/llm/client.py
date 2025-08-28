@@ -99,6 +99,48 @@ class MistralClient:
         # Generate response
         return self.generate_response(prompt, max_tokens=max_tokens)
     
+    def generate_rag_response_with_references(self, question: str, context_chunks: List[str], reference_mapping: Dict[int, Any], max_tokens: int = 1000) -> str:
+        """
+        Generate RAG response with numbered references
+        
+        Args:
+            question: User's question
+            context_chunks: List of context chunks
+            reference_mapping: Mapping of reference numbers to chunks
+            max_tokens: Maximum tokens for response
+            
+        Returns:
+            Generated response text with reference numbers
+        """
+        # Format context chunks with reference numbers
+        context_parts = []
+        for i, chunk in enumerate(context_chunks, 1):
+            context_parts.append(f"[Reference {i}]: {chunk}")
+        
+        context = "\n\n".join(context_parts)
+        
+        # Create RAG prompt with reference instructions
+        prompt = f"""
+        Answer the following question based on the provided context. When you use information from the context, include the reference number in superscript format (e.g., ¹, ², ³).
+
+        Question: {question}
+
+        Context:
+        {context}
+
+        Instructions:
+        - Use the information from the context to answer the question
+        - When referencing specific information, include the reference number in superscript (¹, ², ³)
+        - Place reference numbers at the end of sentences or phrases that use that information
+        - Be clear and concise in your response
+        - Format references as superscript numbers (¹, ², ³)
+
+        Answer:
+        """
+        
+        # Generate response
+        return self.generate_response(prompt, max_tokens=max_tokens)
+    
     def generate_summary(self, content: str) -> str:
         """
         Generate summary response
@@ -160,14 +202,14 @@ class MistralClient:
             Prepared full prompt
         """
         if context:
-            # Truncate context if too long
-            context = self.prompt_manager.truncate_prompt(context, 3000)
+            # Truncate context if too long (reduced from 3000 to 2000)
+            context = self.prompt_manager.truncate_prompt(context, 2000)
             full_prompt = f"Context: {context}\n\n{prompt}"
         else:
             full_prompt = prompt
         
-        # Final truncation to ensure we don't exceed token limits
-        return self.prompt_manager.truncate_prompt(full_prompt, 4000)
+        # Final truncation to ensure we don't exceed token limits (reduced from 4000 to 3000)
+        return self.prompt_manager.truncate_prompt(full_prompt, 3000)
     
     def validate_response_quality(self, response: str) -> Dict[str, Any]:
         """

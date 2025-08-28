@@ -270,11 +270,20 @@ class RAGPipeline:
             QueryResponse with final answer
         """
         try:
-            # Prepare context for LLM
+            # Prepare context for LLM with reference numbers
             context_chunks = [result.chunk.content for result in ranked_results[:3]]
-            
-            # Generate response
-            answer = self.llm_client.generate_rag_response(transformed_query, context_chunks)
+
+            # Create reference mapping
+            reference_mapping = {}
+            for i, result in enumerate(ranked_results[:3], 1):
+                reference_mapping[i] = result.chunk
+
+            # Generate response with references
+            answer = self.llm_client.generate_rag_response_with_references(
+                transformed_query,
+                context_chunks,
+                reference_mapping
+            )
             
             # Validate response
             validation = self.llm_client.validate_response_quality(answer)
@@ -300,7 +309,8 @@ class RAGPipeline:
                 confidence_score=validation.get("confidence", 0.0),
                 intent=intent,
                 search_score=ranked_results[0].score if ranked_results else 0.0,
-                metadata=metadata
+                metadata=metadata,
+                reference_mapping=reference_mapping
             )
             
         except Exception as e:
