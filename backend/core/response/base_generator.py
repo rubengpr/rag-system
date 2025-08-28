@@ -23,7 +23,7 @@ class BaseResponseGenerator(ABC):
     
     def check_search_engine_initialized(self) -> bool:
         """Check if search engine is properly initialized"""
-        return self.search_engine.tf_idf_vectors is not None and len(self.search_engine.tf_idf_vectors) > 0
+        return self.search_engine.tfidf_search.tf_idf_vectors is not None and len(self.search_engine.tfidf_search.tf_idf_vectors) > 0
     
     def get_available_chunks(self, limit: int = 10) -> List[ChunkInfo]:
         """Get available chunks for processing"""

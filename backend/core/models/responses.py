@@ -23,6 +23,8 @@ class QueryResponse(BaseModel):
     processing_time: Optional[float] = None
     confidence_score: Optional[float] = None
     intent: Optional[str] = None
+    search_score: Optional[float] = None
+    metadata: Optional[dict] = None
 
 class DocumentInfo(BaseModel):
     """Information about an uploaded document"""

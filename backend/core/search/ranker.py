@@ -199,9 +199,7 @@ class SearchRanker:
             chunk = chunk_lookup.get(chunk_id)
             if chunk:
                 search_result = SearchResult(
-                    id=chunk_id,
-                    content=chunk.content,
-                    document_id=chunk.document_id,
+                    chunk=chunk,
                     score=score
                 )
                 search_results.append(search_result)

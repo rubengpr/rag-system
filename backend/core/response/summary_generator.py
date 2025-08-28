@@ -61,10 +61,17 @@ class SummaryGenerator(BaseResponseGenerator):
             
         except Exception as e:
             # Fallback to simple response if summary generation fails
-            return self.create_error_response(
-                "I encountered an error while generating the summary. Please try again or ask a more specific question about the document content.",
-                intent='summary_request'
-            )
+            # Check if it's a rate limit error
+            if "rate limit" in str(e).lower():
+                return self.create_error_response(
+                    "I'm currently experiencing high demand. Please wait a moment and try again, or ask a more specific question about your documents.",
+                    intent='summary_request'
+                )
+            else:
+                return self.create_error_response(
+                    "I encountered an error while generating the summary. Please try again or ask a more specific question about the document content.",
+                    intent='summary_request'
+                )
     
     def _generate_summary_content(self, chunks: List[ChunkInfo]) -> str:
         """
@@ -76,28 +83,33 @@ class SummaryGenerator(BaseResponseGenerator):
         Returns:
             Generated summary text
         """
-        # Prepare context for summary
-        context = self.format_context_from_chunks(chunks)
-        
-        # Create specialized summary prompt
-        summary_prompt = f"""
-        Please provide a comprehensive summary of the following document content. 
-        Focus on the key points, main themes, and essential information.
-        
-        Document Content:
-        {context}
-        
-        Please provide a well-structured summary with:
-        1. Main topic/theme
-        2. Key points (bullet points)
-        3. Important details
-        4. Overall conclusion or takeaway
-        
-        Summary:
-        """
-        
-        # Generate summary using LLM
-        return self.llm_client.generate_response(summary_prompt)
+        try:
+            # Prepare context for summary
+            context = self.format_context_from_chunks(chunks)
+            
+            # Create specialized summary prompt
+            summary_prompt = f"""
+            Please provide a comprehensive summary of the following document content. 
+            Focus on the key points, main themes, and essential information.
+            
+            Document Content:
+            {context}
+            
+            Please provide a well-structured summary with:
+            1. Main topic/theme
+            2. Key points (bullet points)
+            3. Important details
+            4. Overall conclusion or takeaway
+            
+            Summary:
+            """
+            
+            # Generate summary using LLM
+            result = self.llm_client.generate_response(summary_prompt)
+            return result
+            
+        except Exception as e:
+            raise
     
     def process_summary_request(self, request: QueryRequest) -> QueryResponse:
         """

@@ -63,8 +63,13 @@ class SimpleIntentGenerator(BaseResponseGenerator):
         Returns:
             QueryResponse with appropriate short response
         """
-        # Create a mock request with the intent
-        mock_request = QueryRequest(query=original_query)
-        mock_request.intent = intent
+        # Get response template directly
+        response_text = self._response_templates.get(intent, self._response_templates['default'])
         
-        return self.generate_response(mock_request)
+        return QueryResponse(
+            answer=response_text,
+            chunks=[],  # No chunks for simple intents
+            processing_time=0.0,  # No processing time for simple responses
+            confidence_score=1.0,  # High confidence for simple responses
+            intent=intent
+        )

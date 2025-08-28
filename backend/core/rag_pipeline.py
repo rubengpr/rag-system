@@ -120,21 +120,25 @@ class RAGPipeline:
         Returns:
             QueryResponse with generated answer
         """
-        # Step 1: Transform query
-        transformed_query = self.query_processor.transform_query(request.query)
-        
-        # Step 2: Validate search engine state
-        validation_result = self._validate_search_engine_state()
-        if not validation_result['is_valid']:
-            return self._create_error_response(start_time, validation_result['message'])
-        
-        # Step 3: Perform search
-        search_results = self._perform_search(transformed_query)
-        if not search_results:
-            return self._handle_no_search_results(transformed_query, intent, start_time)
-        
-        # Step 4: Process search results
-        return self._process_search_results(search_results, transformed_query, intent, start_time)
+        try:
+            # Step 1: Transform query
+            transformed_query = self.query_processor.transform_query(request.query)
+            
+            # Step 2: Validate search engine state
+            validation_result = self._validate_search_engine_state()
+            if not validation_result['is_valid']:
+                return self._create_error_response(start_time, validation_result['message'])
+            
+            # Step 3: Perform search
+            search_results = self.search_engine.search(transformed_query, top_k=self.max_context_chunks, threshold=self.min_similarity_threshold)
+            if not search_results:
+                return self._handle_no_search_results(transformed_query, intent, start_time)
+            
+            # Step 4: Process search results
+            return self._process_search_results(search_results, transformed_query, intent, start_time)
+            
+        except Exception as e:
+            raise
     
     def _validate_search_engine_state(self) -> Dict[str, Any]:
         """
@@ -149,7 +153,7 @@ class RAGPipeline:
                 'message': "No documents have been uploaded yet. Please upload some PDF documents first."
             }
         
-        if not self.search_engine.tf_idf_vectors:
+        if not self.search_engine.tfidf_search.tf_idf_vectors:
             return {
                 'is_valid': False,
                 'message': "Search engine not properly initialized. Please try uploading the document again."
@@ -157,21 +161,7 @@ class RAGPipeline:
         
         return {'is_valid': True}
     
-    def _perform_search(self, transformed_query: str) -> List:
-        """
-        Perform search using the search engine
-        
-        Args:
-            transformed_query: Transformed query string
-            
-        Returns:
-            List of search results
-        """
-        return self.search_engine.hybrid_search(
-            transformed_query, 
-            self.search_engine.chunks, 
-            self.max_context_chunks
-        )
+
     
     def _handle_no_search_results(self, transformed_query: str, intent: str, start_time: float) -> QueryResponse:
         """
@@ -203,15 +193,19 @@ class RAGPipeline:
         Returns:
             QueryResponse with generated answer
         """
-        # Check similarity threshold
-        if not self._validate_search_scores(search_results):
-            return self._handle_low_similarity_fallback(transformed_query, intent, start_time)
-        
-        # Re-rank results
-        ranked_results = self.search_engine.rank_results(search_results)
-        
-        # Generate response
-        return self._generate_final_response(ranked_results, transformed_query, intent, start_time)
+        try:
+            # Check similarity threshold
+            if not self._validate_search_scores(search_results):
+                return self._handle_low_similarity_fallback(transformed_query, intent, start_time)
+            
+            # Use search results directly (they're already ranked)
+            ranked_results = search_results
+            
+            # Generate response
+            return self._generate_final_response(ranked_results, transformed_query, intent, start_time)
+            
+        except Exception as e:
+            raise
     
     def _validate_search_scores(self, search_results: List) -> bool:
         """
@@ -247,14 +241,13 @@ class RAGPipeline:
         if self.search_engine.chunks:
             fallback_chunks = self.search_engine.chunks[:2]  # Use first 2 chunks
             context_chunks = [chunk.content for chunk in fallback_chunks]
-            prompt = self.llm_client.create_prompt(transformed_query, context_chunks)
-            answer = self.llm_client.generate_response(prompt)
+            answer = self.llm_client.generate_rag_response(transformed_query, context_chunks)
             
             return QueryResponse(
                 answer=answer,
                 chunks=fallback_chunks,
                 processing_time=time.time() - start_time,
-                confidence_score=0.5,  # Lower confidence for fallback
+                confidence_score=0.5,  # Lower confidence for fallback,
                 intent=intent
             )
         else:
@@ -276,39 +269,42 @@ class RAGPipeline:
         Returns:
             QueryResponse with final answer
         """
-        # Prepare context for LLM
-        context_chunks = [result.chunk.content for result in ranked_results[:3]]
-        
-        # Generate response
-        prompt = self.llm_client.create_prompt(transformed_query, context_chunks)
-        answer = self.llm_client.generate_response(prompt)
-        
-        # Validate response
-        validation = self.llm_client.validate_response(answer, context_chunks)
-        
-        # Prepare chunks for response
-        response_chunks = [result.chunk for result in ranked_results[:3]]
-        
-        processing_time = time.time() - start_time
-        
-        # Prepare metadata
-        metadata = {
-            "intent": intent,
-            "transformed_query": transformed_query,
-            "total_search_results": len(ranked_results),
-            "validation_issues": validation.get("issues", []),
-            "validation_confidence": validation.get("confidence", 0.0)
-        }
-        
-        return QueryResponse(
-            answer=answer,
-            chunks=response_chunks,
-            processing_time=processing_time,
-            confidence_score=validation.get("confidence", 0.0),
-            intent=intent,
-            search_score=ranked_results[0].score if ranked_results else 0.0,
-            metadata=metadata
-        )
+        try:
+            # Prepare context for LLM
+            context_chunks = [result.chunk.content for result in ranked_results[:3]]
+            
+            # Generate response
+            answer = self.llm_client.generate_rag_response(transformed_query, context_chunks)
+            
+            # Validate response
+            validation = self.llm_client.validate_response_quality(answer)
+            
+            # Prepare chunks for response
+            response_chunks = [result.chunk for result in ranked_results[:3]]
+            
+            processing_time = time.time() - start_time
+            
+            # Prepare metadata
+            metadata = {
+                "intent": intent,
+                "transformed_query": transformed_query,
+                "total_search_results": len(ranked_results),
+                "validation_issues": validation.get("issues", []),
+                "validation_confidence": validation.get("confidence", 0.0)
+            }
+            
+            return QueryResponse(
+                answer=answer,
+                chunks=response_chunks,
+                processing_time=processing_time,
+                confidence_score=validation.get("confidence", 0.0),
+                intent=intent,
+                search_score=ranked_results[0].score if ranked_results else 0.0,
+                metadata=metadata
+            )
+            
+        except Exception as e:
+            raise
     
     def _create_error_response(self, start_time: float, message: str = None) -> QueryResponse:
         """

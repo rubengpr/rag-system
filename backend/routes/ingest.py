@@ -110,7 +110,7 @@ def _initialize_search_engine() -> None:
                 chunk_infos.append(chunk)
         
         # Build search engine with chunks
-        pipeline.search_engine.build_tf_idf_vectors(chunk_infos)
+        pipeline.search_engine.build_index(chunk_infos)
         logger.info(f"Search engine initialized with {len(chunk_infos)} chunks")
         
     except Exception as e:

@@ -32,6 +32,8 @@ def get_rag_pipeline():
         rag_pipeline = RAGPipeline()
     return rag_pipeline
 
+
+
 @router.post("/", response_model=QueryResponse)
 @limiter.limit(settings.RATE_LIMIT_QUERY)
 async def query_knowledge_base(
@@ -71,7 +73,7 @@ async def query_knowledge_base(
         # Calculate processing time
         processing_time = time.time() - start_time
         
-        # Log response
+        # Log response details
         logger.info(f"Query processed in {processing_time:.2f}s with {len(response.chunks)} chunks")
         
         return response

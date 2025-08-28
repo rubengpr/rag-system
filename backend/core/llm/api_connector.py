@@ -112,10 +112,10 @@ class APIConnector:
                 return float(retry_after)
             
             # Fallback: exponential backoff with extra buffer
-            return 60.0  # Wait 60 seconds by default
+            return 30.0  # Reduced from 60 to 30 seconds
             
         except (ValueError, TypeError):
-            return 60.0
+            return 30.0
     
     def create_chat_payload(self, 
                           messages: List[Dict[str, str]], 
