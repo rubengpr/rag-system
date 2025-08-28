@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Message as MessageType, ChunkInfo, DocumentInfo } from '../lib/types';
 
@@ -9,7 +9,6 @@ interface MessageProps {
 
 const Message = ({ message, documents = [] }: MessageProps) => {
   const isUser = message.role === 'user';
-  const [selectedReference, setSelectedReference] = useState<number | null>(null);
   
   // Create a map of document IDs to titles
   const documentMap = new Map(documents.map(doc => [doc.id, doc.filename]));
@@ -37,33 +36,7 @@ const Message = ({ message, documents = [] }: MessageProps) => {
     td: ({ children }: any) => <td className="px-3 py-2 border-r border-gray-300">{children}</td>,
   };
 
-  // Function to render text with clickable references
-  const renderTextWithReferences = (text: string, referenceMapping?: Record<number, ChunkInfo>) => {
-    if (!referenceMapping) {
-      return <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>;
-    }
-    
-    // Split text by reference numbers (¹, ², ³, etc.)
-    const parts = text.split(/([¹²³⁴⁵⁶⁷⁸⁹])/);
-    
-    return parts.map((part, index) => {
-      const refNumber = '¹²³⁴⁵⁶⁷⁸⁹'.indexOf(part) + 1;
-      if (refNumber > 0 && referenceMapping[refNumber]) {
-        return (
-          <span key={index}>
-            <sup 
-              className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
-              onClick={() => setSelectedReference(selectedReference === refNumber ? null : refNumber)}
-              title={`Click to view source ${refNumber}`}
-            >
-              {part}
-            </sup>
-          </span>
-        );
-      }
-      return <ReactMarkdown key={index} components={markdownComponents}>{part}</ReactMarkdown>;
-    });
-  };
+
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -81,32 +54,10 @@ const Message = ({ message, documents = [] }: MessageProps) => {
             </div>
           ) : (
             <div className="markdown-content">
-              {renderTextWithReferences(message.content, message.reference_mapping)}
+              <ReactMarkdown components={markdownComponents}>{message.content}</ReactMarkdown>
             </div>
           )}
         </div>
-        
-        {/* Selected Reference Display */}
-        {!isUser && selectedReference && message.reference_mapping && message.reference_mapping[selectedReference] && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <div className="text-xs bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-medium text-blue-800">
-                  Source {selectedReference}: {documentMap.get(message.reference_mapping[selectedReference].document_id) || `Document ${message.reference_mapping[selectedReference].document_id.slice(0, 8)}...`}
-                </span>
-                <button 
-                  onClick={() => setSelectedReference(null)}
-                  className="text-blue-600 hover:text-blue-800 text-xs"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="text-blue-700 text-sm">
-                {message.reference_mapping[selectedReference].content}
-              </div>
-            </div>
-          </div>
-        )}
         
         {/* Citations for assistant messages with chunks */}
         {!isUser && message.chunks && message.chunks.length > 0 && (
