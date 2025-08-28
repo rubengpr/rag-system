@@ -126,11 +126,20 @@ class APIConnector:
             if retry_after:
                 return float(retry_after)
             
+            # Try to get rate limit reset time
+            reset_time = response.headers.get('X-RateLimit-Reset')
+            if reset_time:
+                import time
+                current_time = int(time.time())
+                wait_time = int(reset_time) - current_time
+                if wait_time > 0:
+                    return float(wait_time) + 1.0  # Add 1 second buffer
+            
             # Fallback: exponential backoff with extra buffer
-            return 30.0  # Reduced from 60 to 30 seconds
+            return 60.0  # Increased to 60 seconds for more conservative approach
             
         except (ValueError, TypeError):
-            return 30.0
+            return 60.0
     
     def create_chat_payload(self, 
                           messages: List[Dict[str, str]], 

@@ -10,7 +10,7 @@ from typing import Optional
 class RateLimiter:
     """Client-side rate limiter for API requests"""
     
-    def __init__(self, min_request_interval: float = 1.0, initial_delay: float = 1.0):
+    def __init__(self, min_request_interval: float = 0.1, initial_delay: float = 0.1):
         """
         Initialize rate limiter
         

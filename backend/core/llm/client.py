@@ -7,17 +7,15 @@ Orchestrates all LLM components and provides a unified interface for LLM interac
 from typing import Dict, Any, List, Optional
 from .api_connector import APIConnector
 from .prompt_manager import PromptManager
-from .rate_limiter import RateLimiter
 from .validator import ResponseValidator
 
 class MistralClient:
-    """Main LLM client that orchestrates API calls, prompts, rate limiting, and validation"""
+    """Main LLM client that orchestrates API calls, prompts, and validation"""
     
     def __init__(self):
         # Initialize components
         self.api_connector = APIConnector()
         self.prompt_manager = PromptManager()
-        self.rate_limiter = RateLimiter()
         self.validator = ResponseValidator()
     
     def generate_response(self, prompt: str, context: str = "", max_tokens: int = 1000) -> str:
@@ -36,9 +34,6 @@ class MistralClient:
             Exception: If API call fails after retries
         """
         try:
-            # Apply rate limiting
-            self.rate_limiter.wait_if_needed()
-            
             # Prepare the full prompt with context
             full_prompt = self._prepare_prompt(prompt, context)
             
@@ -69,9 +64,6 @@ class MistralClient:
             if not validation_result['is_valid']:
                 # Log validation issues but still return the response
                 pass
-            
-            # Update rate limiter
-            self.rate_limiter.update_last_request_time()
             
             return response_text
             
@@ -235,29 +227,4 @@ class MistralClient:
         """
         return self.validator.check_response_coherence(response)
     
-    def set_rate_limiting(self, min_request_interval: float, initial_delay: Optional[float] = None) -> None:
-        """
-        Update rate limiting settings
-        
-        Args:
-            min_request_interval: Minimum time between requests
-            initial_delay: Initial delay (optional)
-        """
-        self.rate_limiter.set_intervals(min_request_interval, initial_delay)
-    
-    def reset_rate_limiter(self) -> None:
-        """Reset the rate limiter state"""
-        self.rate_limiter.reset()
-    
-    def get_rate_limiter_stats(self) -> Dict[str, float]:
-        """
-        Get rate limiter statistics
-        
-        Returns:
-            Dictionary with rate limiter stats
-        """
-        return {
-            'min_request_interval': self.rate_limiter.min_request_interval,
-            'initial_delay': self.rate_limiter.initial_delay,
-            'time_since_last_request': self.rate_limiter.get_time_since_last_request()
-        }
+
