@@ -91,7 +91,8 @@ const ChatPage = () => {
         content: response.answer,
         role: 'assistant',
         timestamp: new Date(),
-        chunks: response.chunks
+        chunks: response.chunks,
+        reference_mapping: response.reference_mapping
       };
       
       setMessages(prev => [...prev, assistantMessage]);
