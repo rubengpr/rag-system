@@ -11,7 +11,7 @@ This module orchestrates the complete RAG pipeline using modular components:
 from typing import List, Dict, Any
 from models import QueryRequest, QueryResponse, ChunkInfo
 from .search import SearchEngine
-from .llm_client import MistralClient
+from .llm import MistralClient
 from .intent_detector import IntentDetector
 from .query_processor import QueryProcessor
 from .response_generator import ResponseGenerator

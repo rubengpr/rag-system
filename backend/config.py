@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
     
     # File Storage
-    DATA_DIR: str = "backend/data"
-    UPLOAD_DIR: str = "backend/data/uploads"
+    DATA_DIR: str = "data"
+    UPLOAD_DIR: str = "data/uploads"
     
     # RAG Configuration
     CHUNK_SIZE: int = 1000

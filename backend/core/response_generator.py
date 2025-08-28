@@ -8,7 +8,7 @@ It includes simple intent responses and specialized processing for summary and d
 import time
 from typing import List
 from models import QueryRequest, QueryResponse, ChunkInfo
-from .llm_client import MistralClient
+from .llm import MistralClient
 from .search import SearchEngine
 
 class ResponseGenerator:

@@ -87,31 +87,4 @@ async def query_knowledge_base(
             detail=f"Internal server error: {str(e)}"
         )
 
-@router.get("/health")
-@limiter.limit(settings.RATE_LIMIT_HEALTH)
-async def health_check(request: Request):
-    """
-    Health check endpoint for the query service
-    
-    Returns:
-        Health status information
-    """
-    try:
-        # Check if RAG pipeline is initialized
-        pipeline = get_rag_pipeline()
-        
-        # Check if search engine has chunks (basic health indicator)
-        has_chunks = len(pipeline.search_engine.chunks) > 0
-        
-        return {
-            "status": "healthy",
-            "service": "query",
-            "has_chunks": has_chunks,
-            "chunk_count": len(pipeline.search_engine.chunks)
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Service unhealthy: {str(e)}"
-        )
+
