@@ -19,9 +19,6 @@ const ChatPage = () => {
         // Check backend health
         await api.healthCheck();
         
-        // Check query service health
-        await api.queryHealthCheck();
-        
       } catch (error) {
         // Add a message to inform the user
         setMessages(prev => [...prev, {
