@@ -1,13 +1,17 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Message as MessageType, ChunkInfo } from '../lib/types';
+import { Message as MessageType, ChunkInfo, DocumentInfo } from '../lib/types';
 
 interface MessageProps {
   message: MessageType;
+  documents?: DocumentInfo[];
 }
 
-const Message = ({ message }: MessageProps) => {
+const Message = ({ message, documents = [] }: MessageProps) => {
   const isUser = message.role === 'user';
+  
+  // Create a map of document IDs to titles
+  const documentMap = new Map(documents.map(doc => [doc.id, doc.filename]));
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -119,7 +123,7 @@ const Message = ({ message }: MessageProps) => {
                 <div key={chunk.id} className="text-xs bg-gray-50 p-2 rounded border-l-2 border-blue-300">
                   <div className="flex justify-between items-start mb-1">
                     <span className="font-medium text-gray-700">
-                      Document {chunk.document_id.slice(0, 8)}...
+                      {documentMap.get(chunk.document_id) || `Document ${chunk.document_id.slice(0, 8)}...`}
                     </span>
                   </div>
                   <div className="text-gray-600 line-clamp-3">

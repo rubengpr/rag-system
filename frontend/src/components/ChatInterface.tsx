@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import Message from './Message';
-import { Message as MessageType } from '../lib/types';
+import { Message as MessageType, DocumentInfo } from '../lib/types';
 
 interface ChatInterfaceProps {
   messages: MessageType[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
+  documents?: DocumentInfo[];
 }
 
 const ChatInterface = ({ 
   messages, 
   onSendMessage, 
-  isLoading 
+  isLoading,
+  documents = []
 }: ChatInterfaceProps) => {
   // State for input value
   const [inputValue, setInputValue] = useState('');
@@ -42,7 +44,7 @@ const ChatInterface = ({
           </div>
         ) : (
           messages.map((message) => (
-            <Message key={message.id} message={message} />
+            <Message key={message.id} message={message} documents={documents} />
           ))
         )}
         {isLoading && (

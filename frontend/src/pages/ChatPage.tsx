@@ -159,6 +159,7 @@ const ChatPage = () => {
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
+                documents={documents}
               />
             </div>
           </div>
