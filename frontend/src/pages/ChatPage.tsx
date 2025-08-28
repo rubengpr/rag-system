@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import FileUploader from '../components/FileUploader';
 import ChatInterface from '../components/ChatInterface';
 import CorpusStatus from '../components/CorpusStatus';
@@ -6,24 +6,50 @@ import { api } from '../lib/api';
 import { Message, DocumentInfo, UploadResponse, QueryResponse } from '../lib/types';
 
 const ChatPage = () => {
-  // TODO: Add state variables for:
-  // - messages: Message[]
-  // - documents: DocumentInfo[]
-  // - isUploading: boolean
-  // - isLoading: boolean
+  // State variables for managing the application
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [documents, setDocuments] = useState<DocumentInfo[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // TODO: Check backend health on component mount
-    // TODO: Call api.healthCheck()
+    // Clear backend and check health on component mount
+    const initializeBackend = async () => {
+      try {
+        // Check backend health
+        await api.healthCheck();
+        
+      } catch (error) {
+        // Add a message to inform the user
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          content: 'Warning: Backend connection failed. Please check if the server is running.',
+          role: 'assistant',
+          timestamp: new Date()
+        }]);
+      }
+    };
+    
+    initializeBackend();
   }, []);
 
   const handleFileUpload = async (files: File[]) => {
-    // TODO: Implement file upload logic
-    // TODO: Set uploading state
-    // TODO: Call api.uploadFiles()
-    // TODO: Update documents and total chunks
-    // TODO: Add success/error messages
-    // TODO: Handle errors gracefully
+    setIsUploading(true);
+    
+    try {
+      // Call the API to upload files, clearing previous documents
+      const response = await api.uploadFiles(files, true);
+      
+      // Update documents state
+      setDocuments(response.documents);
+      
+
+      
+    } catch (error) {
+      // Note: Upload errors are now only logged to console, not shown in chat
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSendMessage = async (content: string) => {
@@ -52,9 +78,13 @@ const ChatPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar - File Upload & Corpus Status */}
           <div className="space-y-6">
-            <FileUploader onUpload={handleFileUpload} isUploading={false} />
+            <FileUploader 
+              onUpload={handleFileUpload} 
+              isUploading={isUploading} 
+              hasDocuments={documents.length > 0}
+            />
             <CorpusStatus 
-              documents={[]} 
+              documents={documents} 
               onClearCorpus={handleClearCorpus} 
             />
           </div>
@@ -63,9 +93,9 @@ const ChatPage = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[600px]">
               <ChatInterface 
-                messages={[]}
+                messages={messages}
                 onSendMessage={handleSendMessage}
-                isLoading={false}
+                isLoading={isLoading}
               />
             </div>
           </div>

@@ -1,10 +1,10 @@
 import os
 from typing import Optional
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # API Configuration
-    MISTRAL_API_KEY: str  # Required from environment variable
+    MISTRAL_API_KEY: Optional[str] = None  # Optional for development
     MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
     
     # File Storage

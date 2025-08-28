@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Message from './Message';
 import { Message as MessageType } from '../lib/types';
 
@@ -13,16 +13,22 @@ const ChatInterface = ({
   onSendMessage, 
   isLoading 
 }: ChatInterfaceProps) => {
-  // TODO: Add state for input value
-  // TODO: Add inputValue state variable
+  // State for input value
+  const [inputValue, setInputValue] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
-    // TODO: Implement form submission handling
-    // TODO: Prevent default form behavior
-    // TODO: Validate input value
-    // TODO: Call onSendMessage with input value
-    // TODO: Clear input after submission
-    // TODO: Check if loading state
+    e.preventDefault();
+    
+    // Validate input value
+    if (!inputValue.trim() || isLoading) {
+      return;
+    }
+    
+    // Call onSendMessage with input value
+    onSendMessage(inputValue.trim());
+    
+    // Clear input after submission
+    setInputValue('');
   };
 
   return (
@@ -52,15 +58,15 @@ const ChatInterface = ({
         <div className="flex space-x-2">
           <input
             type="text"
-            value=""
-            onChange={(e) => {}}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask a question about your documents..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={false}
+            disabled={isLoading || !inputValue.trim()}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send

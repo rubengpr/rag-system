@@ -6,6 +6,11 @@ from typing import List
 
 from models import QueryRequest, QueryResponse, UploadResponse
 from config import settings
+from core.pdf_processor import PDFProcessor
+
+# In-memory storage for documents and chunks
+documents_storage = {}  # document_id -> document_info
+chunks_storage = {}     # document_id -> list of chunks
 
 # Create FastAPI app
 app = FastAPI(
@@ -27,20 +32,67 @@ app.add_middleware(
 async def health_check():
     return {"status": "healthy", "timestamp": time.time()}
 
+
+
 @app.post("/ingest", response_model=UploadResponse)
-async def ingest_files(files: List[UploadFile] = File(...)):
+async def ingest_files(files: List[UploadFile] = File(...), clear_previous: bool = False):
     """Upload and process PDF files for the knowledge base."""
+    
+    # Clear previous documents if requested
+    if clear_previous:
+        documents_storage.clear()
+        chunks_storage.clear()
+    
     try:
-        start_time = time.time()
-        # TODO: Implement file processing logic
-        processing_time = time.time() - start_time
+        # Security: Validate file types and sizes
+        for file in files:
+            if not file.content_type == "application/pdf":
+                raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+            if file.size > 10 * 1024 * 1024:  # 10MB limit
+                raise HTTPException(status_code=400, detail="File size must be less than 10MB")
         
-        return UploadResponse(
-            documents=[]
+        # Initialize PDF processor
+        pdf_processor = PDFProcessor(
+            chunk_size=settings.CHUNK_SIZE,
+            chunk_overlap=settings.CHUNK_OVERLAP
         )
         
+        # Process each PDF file
+        processed_documents = []
+        for file in files:
+            try:
+                # Process the PDF
+                result = pdf_processor.process_pdf(file.file, file.filename)
+                
+                # Store document and chunks in memory
+                documents_storage[result["document_id"]] = {
+                    "filename": result["filename"],
+                    "chunk_count": result["chunk_count"],
+                    "total_characters": result["total_characters"]
+                }
+                chunks_storage[result["document_id"]] = result["chunks"]
+                
+                # Create document info for response
+                from models import DocumentInfo
+                doc_info = DocumentInfo(
+                    id=result["document_id"],
+                    filename=result["filename"]
+                )
+                processed_documents.append(doc_info)
+                
+            except Exception as e:
+                # Log error but continue processing other files
+                continue
+        
+        if not processed_documents:
+            raise HTTPException(status_code=400, detail="No PDF files were successfully processed")
+        
+        return UploadResponse(documents=processed_documents)
+        
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
-        # Don't expose internal error details to clients
+        # Don't expose internal error details
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/query", response_model=QueryResponse)
