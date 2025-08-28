@@ -18,9 +18,9 @@ class APIConnector:
         self.model = settings.MODEL_NAME
         
         # Request configuration
-        self.timeout = 30
-        self.max_retries = 5
-        self.retry_delay = 2
+        self.timeout = 15  # Reduced from 30 to 15 seconds
+        self.max_retries = 3  # Reduced from 5 to 3
+        self.retry_delay = 1  # Reduced from 2 to 1 second
         
         # Headers for API requests
         self.headers = {
