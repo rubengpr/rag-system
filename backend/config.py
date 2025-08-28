@@ -25,11 +25,18 @@ class Settings(BaseSettings):
     MAX_TOKENS: int = 1000
     TEMPERATURE: float = 0.1
     
+    # Rate Limiting Configuration
+    RATE_LIMIT_QUERY: str = "30/minute"
+    RATE_LIMIT_UPLOAD: str = "10/minute"
+    RATE_LIMIT_HEALTH: str = "60/minute"
+    
     class Config:
-        env_file = ".env"
+        env_file = "../.env"
 
 # Global settings instance
 settings = Settings()
+
+
 
 # Ensure directories exist
 os.makedirs(settings.DATA_DIR, exist_ok=True)
