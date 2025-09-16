@@ -1,9 +1,9 @@
-import React from 'react';
 import { DocumentInfo } from '../lib/types';
 
 interface CorpusStatusProps {
   documents: DocumentInfo[];
   onClearCorpus: () => void;
+  isLoading?: boolean;
 }
 
 const CorpusStatus = ({ 

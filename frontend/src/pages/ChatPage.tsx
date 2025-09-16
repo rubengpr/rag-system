@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import FileUploader from '../components/FileUploader';
 import ChatInterface from '../components/ChatInterface';
 import CorpusStatus from '../components/CorpusStatus';
 import { api } from '../lib/api';
-import { Message, DocumentInfo, UploadResponse, QueryResponse } from '../lib/types';
+import { Message, DocumentInfo, QueryResponse } from '../lib/types';
 
 const ChatPage = () => {
   // State variables for managing the application
