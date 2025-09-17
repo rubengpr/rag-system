@@ -115,7 +115,7 @@ cp scripts/env.example .env
 
 2. **Configure API Keys**
 ```bash
-# Edit .env file and add your Mistral AI API key
+# Edit backend/.env file and add your Mistral AI API key
 MISTRAL_API_KEY=your_actual_api_key_here
 ```
 

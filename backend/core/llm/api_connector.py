@@ -9,6 +9,7 @@ import json
 import time
 from typing import Dict, Any, Optional, List
 from config import settings
+import logging
 
 class APIConnector:
     """Handles HTTP requests to Mistral AI API"""
@@ -26,6 +27,10 @@ class APIConnector:
         self.headers = {
             "Content-Type": "application/json"
         }
+
+        # Configure logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
     
     def get_authorization_header(self) -> str:
         """
@@ -57,10 +62,10 @@ class APIConnector:
             try:
                 # Log request size for debugging
                 payload_str = json.dumps(payload)
-                print(f"REQUEST DEBUG:")
-                print(f"  Payload size: {len(payload_str)} characters")
-                print(f"  Messages count: {len(payload.get('messages', []))}")
-                print(f"  Max tokens: {payload.get('max_tokens', 'Unknown')}")
+                self.logger.debug(f"REQUEST DEBUG:")
+                self.logger.debug(f"  Payload size: {len(payload_str)} characters")
+                self.logger.debug(f"  Messages count: {len(payload.get('messages', []))}")
+                self.logger.debug(f"  Max tokens: {payload.get('max_tokens', 'Unknown')}")
                 
                 response = requests.post(
                     f"{self.base_url}/chat/completions",
@@ -75,14 +80,9 @@ class APIConnector:
                 elif response.status_code == 401:
                     raise Exception(f"API request failed with status 401: {response.text}")
                 elif response.status_code == 429:
-                    # Rate limit exceeded
-                    print(f"RATE LIMIT DEBUG:")
-                    print(f"  Status: {response.status_code}")
-                    print(f"  Headers: {dict(response.headers)}")
-                    print(f"  Limit: {response.headers.get('X-RateLimit-Limit', 'Unknown')}")
-                    print(f"  Remaining: {response.headers.get('X-RateLimit-Remaining', 'Unknown')}")
-                    print(f"  Reset: {response.headers.get('X-RateLimit-Reset', 'Unknown')}")
-                    print(f"  Retry-After: {response.headers.get('Retry-After', 'Unknown')}")
+                    # Rate limit exceeded - use logger instead of print
+                    self.logger.warning(f"Rate limit exceeded. Status: {response.status_code}")
+                    self.logger.warning(f"Retry-After: {response.headers.get('Retry-After', 'Unknown')}")
                     
                     if attempt < self.max_retries - 1:
                         wait_time = self._calculate_rate_limit_wait(response)

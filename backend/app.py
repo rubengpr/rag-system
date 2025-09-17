@@ -8,6 +8,7 @@ middleware setup, and route registration.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
 
 from config import settings
 from routes import health, ingest, query
@@ -26,10 +27,21 @@ def create_app() -> FastAPI:
         version="1.0.0"
     )
     
+    # Configure CORS origins based on environment
+    allowed_origins = [
+        "http://localhost:3000", 
+        "http://localhost:5173",
+        "https://rag-system-bay.vercel.app"
+    ]
+    
+    # Add production origins if they exist
+    if os.getenv("FRONTEND_URL"):
+        allowed_origins.append(os.getenv("FRONTEND_URL"))
+    
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://localhost:5173"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST"],  # Only allow needed methods
         allow_headers=["Content-Type", "Authorization"],  # Only allow needed headers

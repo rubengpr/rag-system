@@ -3,13 +3,16 @@ from typing import Optional
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # API Configuration
-    MISTRAL_API_KEY: Optional[str] = None  # Optional for development
+    # API Configuration - REQUIRED for production
+    MISTRAL_API_KEY: str  # Remove Optional, make required
     MISTRAL_BASE_URL: str = "https://api.mistral.ai/v1"
     
-    # File Storage
-    DATA_DIR: str = "data"
-    UPLOAD_DIR: str = "data/uploads"
+    # Environment detection
+    ENVIRONMENT: str = "development"
+    
+    # File Storage - Use environment-specific paths
+    DATA_DIR: str = os.getenv("DATA_DIR", "data")
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "data/uploads")
     
     # RAG Configuration
     CHUNK_SIZE: int = 1000
@@ -31,7 +34,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_HEALTH: str = "60/minute"
     
     class Config:
-        env_file = "../.env"
+        env_file = ".env"  # Fix path - should be in backend directory
 
 # Global settings instance
 settings = Settings()
